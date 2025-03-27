@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Modern Notepad</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #121212;
+            color: #eee;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            overflow: hidden;
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
+
+        .main-container {
+            width: 90%;
+            max-width: 600px;
+            text-align: center;
+            padding: 20px;
+            border-radius: 20px;
+            background-color: #1f1f1f;
+            box-shadow: 0px 10px 20px rgba(0, 0, 0, 0.1);
+        }
+
+        .button {
+            background-color: #3e8e41;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            margin: 12px;
+            cursor: pointer;
+            border-radius: 20px;
+            font-size: 16px;
+            transition: all 0.3s ease;
+        }
+
+        .button:hover {
+            background-color: #2f6c33;
+        }
+
+        .button-back {
+            background-color: #444;
+        }
+
+        .button-back:hover {
+            background-color: #666;
+        }
+
+        .note-creator input, .note-creator textarea {
+            width: 85%;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 15px;
+            border: 1px solid #333;
+            background-color: #282828;
+            color: #fff;
+            font-size: 16px;
+            transition: border-color 0.3s ease;
+        }
+
+        .note-creator textarea {
+            height: 150px;
+        }
+
+        .note-creator input:focus, .note-creator textarea:focus {
+            border-color: #4CAF50;
+        }
+
+        .notes-list ul {
+            list-style-type: none;
+            padding: 0;
+            margin: 0;
+            width: 85%;
+            margin: 0 auto;
+        }
+
+        .notes-list li {
+            padding: 20px;
+            margin: 12px 0;
+            background-color: #333;
+            border-radius: 15px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        .notes-list li:hover {
+            background-color: #444;
+        }
+
+        .documentation p {
+            text-align: left;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .fade-in {
+            animation: fadeIn 0.5s ease-in-out;
+        }
+
+        @keyframes fadeIn {
+            0% { opacity: 0; }
+            100% { opacity: 1; }
+        }
+
+        .button-back {
+            background-color: #555;
+            padding: 10px 15px;
+        }
+    </style>
+</head>
+<body>
+
+<div id="main-container" class="main-container fade-in">
+    <div id="welcome-page" class="welcome-page">
+        <button class="button" id="new-note-btn">New Note</button>
+        <button class="button" id="view-notes-btn">View Notes</button>
+        <button class="button" id="docs-btn">Documentation</button>
+    </div>
+
+    <div id="notes-list" class="notes-list hidden fade-in">
+        <h2>Your Notes</h2>
+        <ul id="notes-list-ul"></ul>
+        <button id="back-to-main-btn" class="button button-back">Back to Main</button>
+    </div>
+
+    <div id="note-creator" class="note-creator hidden fade-in">
+        <h2>Create/Edit a Note</h2>
+        <input type="text" id="note-title" placeholder="Enter note title" />
+        <textarea id="note-text" placeholder="Write your note here"></textarea>
+        <button id="save-note-btn" class="button">Save Note</button>
+        <button id="back-to-main-btn-creator" class="button button-back">Back</button>
+    </div>
+
+    <div id="documentation" class="documentation hidden fade-in">
+        <h2>How to Use the App</h2>
+        <p>1. Click on "New Note" to create a new note.</p>
+        <p>2. Add a title and write your note.</p>
+        <p>3. Click "Save Note" to save it.</p>
+        <p>4. To delete a note, write "DELETE" in the note description and click "Save Note".</p>
+        <button id="close-docs-btn" class="button">Close</button>
+    </div>
+</div>
+
+<script>
+    const newNoteBtn = document.getElementById("new-note-btn");
+    const viewNotesBtn = document.getElementById("view-notes-btn");
+    const docsBtn = document.getElementById("docs-btn");
+    const backToMainBtn = document.getElementById("back-to-main-btn");
+    const backToMainBtnCreator = document.getElementById("back-to-main-btn-creator");
+    const saveNoteBtn = document.getElementById("save-note-btn");
+    const closeDocsBtn = document.getElementById("close-docs-btn");
+
+    const welcomePage = document.getElementById("welcome-page");
+    const notesListPage = document.getElementById("notes-list");
+    const noteCreatorPage = document.getElementById("note-creator");
+    const documentationPage = document.getElementById("documentation");
+
+    const noteTitleInput = document.getElementById("note-title");
+    const noteTextInput = document.getElementById("note-text");
+    const notesListUl = document.getElementById("notes-list-ul");
+
+    let currentNote = null;
+
+    function showPage(page) {
+        welcomePage.classList.add('hidden');
+        notesListPage.classList.add('hidden');
+        noteCreatorPage.classList.add('hidden');
+        documentationPage.classList.add('hidden');
+
+        page.classList.remove('hidden');
+        page.classList.add('fade-in');
+    }
+
+    function saveNoteToLocalStorage(title, text) {
+        let notes = JSON.parse(localStorage.getItem('notes')) || [];
+        if (currentNote) {
+            const index = notes.findIndex(note => note.title === currentNote.title);
+            notes[index] = { title, text };
+        } else {
+            notes.push({ title, text });
+        }
+
+        if (text === 'DELETE') {
+            deleteNoteFromLocalStorage(title);
+            alert('Note deleted!');
+            showPage(welcomePage);
+        } else {
+            localStorage.setItem('notes', JSON.stringify(notes));
+            alert('Note saved!');
+            showPage(welcomePage);
+        }
+    }
+
+    function deleteNoteFromLocalStorage(title) {
+        let notes = JSON.parse(localStorage.getItem('notes')) || [];
+        notes = notes.filter(note => note.title !== title);
+        localStorage.setItem('notes', JSON.stringify(notes));
+    }
+
+    function loadNotes() {
+        let notes = JSON.parse(localStorage.getItem('notes')) || [];
+        notesListUl.innerHTML = '';
+        notes.forEach(note => {
+            const li = document.createElement("li");
+            li.textContent = note.title;
+            li.onclick = () => editNote(note);
+            notesListUl.appendChild(li);
+        });
+    }
+
+    function editNote(note) {
+        currentNote = note;
+        noteTitleInput.value = note.title;
+        noteTextInput.value = note.text;
+        showPage(noteCreatorPage);
+    }
+
+    newNoteBtn.onclick = () => {
+        currentNote = null;
+        noteTitleInput.value = '';
+        noteTextInput.value = '';
+        showPage(noteCreatorPage);
+    };
+
+    viewNotesBtn.onclick = () => {
+        loadNotes();
+        showPage(notesListPage);
+    };
+
+    docsBtn.onclick = () => {
+        showPage(documentationPage);
+    };
+
+    backToMainBtn.onclick = backToMainBtnCreator.onclick = () => {
+        showPage(welcomePage);
+    };
+
+    closeDocsBtn.onclick = () => {
+        showPage(welcomePage);
+    };
+
+    saveNoteBtn.onclick = () => {
+        const title = noteTitleInput.value;
+        const text = noteTextInput.value;
+
+        saveNoteToLocalStorage(title, text);
+    };
+
+    showPage(welcomePage);
+</script>
+
+</body>
+</html>
